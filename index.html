@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>可移动面板</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      .panelWrap {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+      }
+      .leftPanel {
+        width: 130px;
+        height: 100%;
+        line-height: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+      .col-resize {
+        width: 3px;
+        height: 100%;
+        background-color: black;
+        cursor: col-resize;
+        resize: horizontal;
+        position: absolute;
+        top: 0;
+        right: 0;
+        -webkit-user-drag: element;
+      }
+      .right {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .topPanel {
+        height: 300px;
+        text-align: center;
+        line-height: 1;
+        display: flex;
+        position: relative;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .row-resize {
+        width: 100%;
+        height: 3px;
+        background-color: black;
+        cursor: row-resize;
+        position: absolute;
+        resize: vertical;
+        bottom: 0;
+        left: 0;
+        -webkit-user-drag: element;
+      }
+      .bottomPanel {
+        flex: auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="panelWrap">
+      <div class="leftPanel panel">
+        左
+        <div class="col-resize"></div>
+      </div>
+      <div class="right">
+        <div class="topPanel panel">
+          上
+          <div class="row-resize"></div>
+        </div>
+        <div class="bottomPanel panel">下</div>
+      </div>
+    </div>
+
+    <script>
+      const doms = {
+        leftPanel: document.querySelector(".leftPanel"),
+        topPanel: document.querySelector(".topPanel"),
+        bottomPanel: document.querySelector(".bottomPanel"),
+        colResize: document.querySelector(".col-resize"),
+        rowResize: document.querySelector(".row-resize"),
+      };
+      function resizeDom(dom, config) {
+        const { width, height } = config;
+        if (width) {
+          dom.style.width = width + "px";
+        }
+        if (height) {
+          dom.style.height = height;
+        }
+      }
+      initDom(doms.colResize, (dom) => {
+        let parentDom = null;
+        let startDrag = false;
+        let curX = 0;
+        function init() {
+          parentDom = findPanelParent(dom);
+          console.log(dom.getBoundingClientRect());
+          curX = dom.getBoundingClientRect().right;
+        }
+        init();
+        dom.addEventListener("mousedown", (e) => {
+          startDrag = true;
+          disableUserSelect(parentDom);
+        });
+        document.addEventListener("mousemove", (e) => {
+          if (!startDrag) return;
+          curX += e.movementX;
+          parentDom.style.width = curX + "px";
+        });
+        document.addEventListener("mouseup", () => {
+          startDrag = false;
+          enableUserSelect(parentDom, "auto");
+        });
+      });
+
+      initDom(doms.rowResize, (dom) => {
+        let parentDom = null;
+        let startDrag = false;
+        let curY = 0;
+        function init() {
+          parentDom = findPanelParent(dom);
+          curY = dom.getBoundingClientRect().top;
+        }
+        init();
+        dom.addEventListener("mousedown", (e) => {
+          startDrag = true;
+          disableUserSelect(parentDom);
+        });
+        document.addEventListener("mousemove", (e) => {
+          if (!startDrag) return;
+          curY += e.movementY;
+          parentDom.style.height = curY + "px";
+        });
+        document.addEventListener("mouseup", () => {
+          startDrag = false;
+          enableUserSelect(parentDom, "auto");
+        });
+      });
+
+      function findPanelParent(dom, maxLevel = 3) {
+        let parent = dom.parentElement;
+        let level = maxLevel;
+        while (!parent.classList.contains("panel")) {
+          if (level < 0) {
+            break;
+            return null;
+          }
+          parent = parent.parentElement;
+          level--;
+        }
+        return parent;
+      }
+      function initDom(dom, cb) {
+        cb.call(null, dom);
+      }
+      function disableUserSelect(dom) {
+        dom.style.userSelect = "none";
+      }
+      function enableUserSelect(dom, enable) {
+        dom.style.userSelect = enable;
+      }
+    </script>
+  </body>
+</html>
